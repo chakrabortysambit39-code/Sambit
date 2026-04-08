@@ -1,0 +1,147 @@
+import streamlit as st
+from groq import Groq
+import sqlite3
+import time
+from PIL import Image
+import base64
+
+# ---------------- API ----------------
+client = Groq(api_key="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")
+
+# ---------------- DATABASE ----------------
+conn = sqlite3.connect("app.db", check_same_thread=False)
+c = conn.cursor()
+
+c.execute("CREATE TABLE IF NOT EXISTS users(username TEXT, password TEXT)")
+c.execute("CREATE TABLE IF NOT EXISTS chats(role TEXT, message TEXT)")
+c.execute("INSERT OR IGNORE INTO users VALUES ('admin', '1234')")
+conn.commit()
+
+# ---------------- PAGE ----------------
+st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="wide")
+
+# ---------------- LOGIN ----------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    st.title("🔐 Login")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        user = c.fetchone()
+
+        if user:
+            st.session_state.logged_in = True
+            st.success("Login successful!")
+            st.rerun()
+        else:
+            st.error("Invalid credentials")
+
+    st.stop()
+
+# ---------------- MAIN ----------------
+st.title("🤖 AI Assistant (Chat + Vision)")
+
+# ---------------- CHAT HISTORY ----------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Show chat
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# ---------------- CAMERA / VISION ----------------
+with st.expander("📷 Scan Book / Image"):
+    img_file = st.camera_input("Take a picture")
+
+    if img_file:
+        image = Image.open(img_file)
+        st.image(image)
+
+        img_bytes = img_file.getvalue()
+        img_base64 = base64.b64encode(img_bytes).decode()
+
+        if st.button("Analyze Image"):
+            with st.spinner("Understanding image... 🔍"):
+
+                # ✅ FIXED FORMAT
+                response = client.chat.completions.create(
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Explain this image for a grade 7 student."
+                                },
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{img_base64}"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                )
+
+                reply = response.choices[0].message.content
+                st.success(reply)
+
+# ---------------- CHAT INPUT ----------------
+user_input = st.chat_input("Ask anything...")
+
+if user_input:
+    # save user
+    st.session_state.messages.append({"role": "user", "content": user_input})
+
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    # AI response
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking... ⚡"):
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=st.session_state.messages
+            )
+
+            reply = response.choices[0].message.content
+
+            # -------- TYPING + BLINKING CURSOR --------
+            placeholder = st.empty()
+            output = ""
+
+            for i, char in enumerate(reply):
+                output += char
+                cursor = "▌" if i % 2 == 0 else ""
+                placeholder.markdown(output + cursor)
+                time.sleep(0.01)
+
+            placeholder.markdown(output)
+
+            # save assistant
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": reply
+            })
+
+            c.execute("INSERT INTO chats VALUES (?, ?)", ("assistant", reply))
+            conn.commit()
+
+# ---------------- SIDEBAR ----------------
+st.sidebar.title("⚙️ Controls")
+
+if st.sidebar.button("Clear Chat"):
+    st.session_state.messages = []
+    st.rerun()
+
+if st.sidebar.button("Logout"):
+    st.session_state.logged_in = False
+    st.rerun()
