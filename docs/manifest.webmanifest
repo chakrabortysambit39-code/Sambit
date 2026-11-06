@@ -1,0 +1,12 @@
+{
+  "name":"Lost World — The Forgotten Valley",
+  "short_name":"Lost World",
+  "description":"Explore, survive and restore the Forgotten Valley.",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "orientation":"landscape",
+  "background_color":"#07131a",
+  "theme_color":"#07131a",
+  "icons":[{"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

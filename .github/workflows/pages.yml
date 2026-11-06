@@ -28,6 +28,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Validate release files
+        run: |
+          test -s docs/index.html
+          test -s docs/manifest.webmanifest
+          test -s docs/sw.js
+          grep -q "function terrainHeight" docs/index.html
+          grep -q "register('./sw.js')" docs/index.html
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:

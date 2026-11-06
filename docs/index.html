@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07131a"><title>LOST WORLD — The Forgotten Valley</title>
+<meta name="theme-color" content="#07131a">
+<meta name="description" content="Explore the Forgotten Valley in Lost World, a free 3D adventure with quests, combat, treasure and a guardian boss.">
+<meta name="application-name" content="Lost World">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>LOST WORLD — The Forgotten Valley</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
 *{box-sizing:border-box}
@@ -69,9 +77,12 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
 .touch-btn:active{background:#c5a65c;color:#14221a}
 #touch-look{position:absolute;right:0;top:20%;width:48%;height:55%;pointer-events:auto;touch-action:none}
 @media(pointer:coarse){#touch-controls{display:block}#help{display:none}#map-wrap{bottom:245px}#status{bottom:12px}#inventory{bottom:12px;left:50%;right:auto;transform:translateX(-50%);white-space:nowrap}#message{bottom:235px}}
-#settings-btn{position:absolute;right:20px;top:18px;pointer-events:auto;background:#081b20b8;color:#f4f1e8;border:1px solid #d4edcf55;padding:9px 12px;margin:0;font-size:11px}
+#settings-btn{position:absolute;right:178px;top:78px;pointer-events:auto;background:#081b20b8;color:#f4f1e8;border:1px solid #d4edcf55;padding:9px 12px;margin:0;font-size:11px}
 #settings-panel{position:fixed;inset:0;z-index:9;display:none;place-items:center;background:#020b0ddd;padding:20px}
 #settings-panel .panel{pointer-events:auto}
+#install-app{position:absolute;right:178px;top:120px;display:none;padding:9px 12px;margin:0;background:#173a31;color:#eff8e9;border:1px solid #d4edcf66;font-size:10px}
+#install-app[hidden]{display:none!important}
+@media(max-width:600px){#settings-btn{right:12px;top:58px}#install-app{right:12px;top:100px}}
 
 </style>
 <script type="importmap">
@@ -102,7 +113,7 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
   <div id="save-indicator">GAME SAVED</div>
   <div id="bossbar"><strong>THE VALLEY GUARDIAN</strong><div id="boss-track"><div id="boss-fill"></div></div></div><div id="crosshair"></div><div id="toast"></div>
   <div id="message">Crystal collected!</div>
-  <button id="settings-btn">SETTINGS</button>
+  <button id="settings-btn">SETTINGS</button><button id="install-app" hidden>INSTALL GAME</button>
   <div id="touch-controls"><div id="touch-look"></div><div id="stick-zone"><div id="stick-knob"></div></div>
     <div id="touch-actions"><button class="touch-btn" id="touch-jump">JUMP</button><button class="touch-btn" id="touch-attack">ATTACK</button><button class="touch-btn" id="touch-use">USE</button><button class="touch-btn" id="touch-interact">INTERACT</button></div>
   </div>
@@ -141,7 +152,7 @@ const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
 camera.position.set(0,5,9);
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia("(pointer:coarse)").matches?1.5:2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -165,24 +176,27 @@ const trunkMat=mat(0x60452f);
 const leafMats=[mat(0x285c42),mat(0x39764c),mat(0x4b8754)];
 const rockMat=mat(0x68766b);
 const goldMat=new THREE.MeshStandardMaterial({color:0x7ee7d0,emissive:0x26bca1,emissiveIntensity:1.7,roughness:.28,metalness:.15});
+function terrainHeight(x,z){return Math.sin(x*.055)*1.25+Math.cos(z*.045)*1.1+Math.sin((x+z)*.035)*.65;}
 const groundGeo=new THREE.PlaneGeometry(220,220,100,100);
 groundGeo.rotateX(-Math.PI/2);
 const pos=groundGeo.attributes.position;
 for(let i=0;i<pos.count;i++){
  const x=pos.getX(i),z=pos.getZ(i);
- const h=Math.sin(x*.055)*1.25+Math.cos(z*.045)*1.1+Math.sin((x+z)*.035)*.65;
- pos.setY(i,h);
+ pos.setY(i,terrainHeight(x,z));
 }
 groundGeo.computeVertexNormals();
 const ground=new THREE.Mesh(groundGeo,grassMat);
 ground.receiveShadow=true;scene.add(ground);
 
 const pathMat=mat(0x9a8b68);
-const path=new THREE.Mesh(new THREE.PlaneGeometry(10,150),pathMat);
-path.rotation.x=-Math.PI/2;path.position.set(0,.12,-15);path.receiveShadow=true;scene.add(path);
+const pathGeo=new THREE.PlaneGeometry(10,150,8,100);pathGeo.rotateX(-Math.PI/2);
+const pathPos=pathGeo.attributes.position;
+for(let i=0;i<pathPos.count;i++){const x=pathPos.getX(i),z=pathPos.getZ(i)-15;pathPos.setY(i,terrainHeight(x,z)+.12);}
+pathGeo.computeVertexNormals();
+const path=new THREE.Mesh(pathGeo,pathMat);path.position.set(0,0,-15);path.receiveShadow=true;scene.add(path);
 
 function makeTree(x,z,s=1){
- const group=new THREE.Group();group.position.set(x,0,z);group.scale.setScalar(s);
+ const group=new THREE.Group();group.position.set(x,terrainHeight(x,z),z);group.scale.setScalar(s);
  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.38,3.1,6),trunkMat);
  trunk.position.y=1.5;trunk.castShadow=true;trunk.receiveShadow=true;group.add(trunk);
  for(let i=0;i<3;i++){
@@ -201,7 +215,7 @@ for(let i=0;i<115;i++){
 for(let i=0;i<48;i++){
  const x=(rand()-.5)*150,z=(rand()-.5)*150;
  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+rand()*1.25,0),rockMat);
- rock.position.set(x,.2+rand()*.35,z);rock.scale.y=.55+rand()*.6;
+ rock.position.set(x,terrainHeight(x,z)+.2+rand()*.35,z);rock.scale.y=.55+rand()*.6;
  rock.rotation.set(rand()*2,rand()*3,rand()*2);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
 }
 // distant layered hills
@@ -212,7 +226,7 @@ for(let i=0;i<22;i++){
 }
 
 // Procedural low-poly explorer: hood, tunic, cape, trousers, boots and backpack.
-const player=new THREE.Group();scene.add(player);
+const player=new THREE.Group();player.position.set(0,terrainHeight(0,8),8);scene.add(player);
 const cloth=mat(0x31594e),clothLight=mat(0x557b68),leather=mat(0x755139),darkLeather=mat(0x3a3027),skin=mat(0xd5a77e),hoodMat=mat(0x263f38),metal=mat(0x9b9b80);
 function addMesh(parent,geo,material,x,y,z,sx=1,sy=1,sz=1){
  const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
@@ -249,11 +263,11 @@ const crystals=[];
 for(let i=0;i<8;i++){
  const a=i/8*Math.PI*2,r=12+rand()*24;
  const c=new THREE.Mesh(crystalGeo,goldMat);
- c.position.set(Math.cos(a)*r,.9,Math.sin(a)*r-12);
+ c.position.set(Math.cos(a)*r,terrainHeight(Math.cos(a)*r,Math.sin(a)*r-12)+.9,Math.sin(a)*r-12);
  c.scale.set(.7+rand()*.45,1.2+rand()*.5,.7+rand()*.45);
  c.castShadow=true;scene.add(c);crystals.push({mesh:c,baseY:c.position.y,phase:rand()*6});
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.85,.035,6,24),new THREE.MeshBasicMaterial({color:0x8af3d8,transparent:true,opacity:.5}));
- ring.rotation.x=Math.PI/2;ring.position.set(c.position.x,.16,c.position.z);scene.add(ring);
+ ring.rotation.x=Math.PI/2;ring.position.set(c.position.x,terrainHeight(c.position.x,c.position.z)+.16,c.position.z);scene.add(ring);
 }
 
 // Small environmental details
@@ -262,7 +276,7 @@ for(let i=0;i<120;i++){
  const x=(rand()-.5)*100,z=(rand()-.5)*100;
  if(Math.abs(x)<5&&z>-40&&z<20)continue;
  const flower=new THREE.Mesh(new THREE.SphereGeometry(.07,5,5),new THREE.MeshBasicMaterial({color:flowerColors[i%3]}));
- flower.position.set(x,.35,z);scene.add(flower);
+ flower.position.set(x,terrainHeight(x,z)+.35,z);scene.add(flower);
 }
 
 const keys={};let yaw=0,pitch=-.12,velocityY=0,onGround=true,started=false,crystalsFound=0,stamina=100,portalWon=false;
@@ -271,6 +285,7 @@ const cameraTarget=new THREE.Vector3();
 const desiredCamera=new THREE.Vector3();
 const forward=new THREE.Vector3(),right=new THREE.Vector3(),move=new THREE.Vector3();
 const bounds=92;
+let gamepadX=0,gamepadY=0,gamepadLookX=0,gamepadLookY=0,gamepadJump=false,gamepadSprint=false,gamepadAttackWasDown=false,gamepadInteractWasDown=false;
 
 /* Touch controls, camera drag, quality and fullscreen options */
 const touchAxis={x:0,y:0};let stickPointer=null,lookPointer=null,lastLookX=0,lastLookY=0;
@@ -294,10 +309,18 @@ document.getElementById('touch-use').addEventListener('click',usePotion);
 const settingsPanel=document.getElementById('settings-panel');
 document.getElementById('settings-btn').addEventListener('click',()=>{settingsPanel.style.display='grid';paused=true;document.exitPointerLock?.();});
 document.getElementById('close-settings').addEventListener('click',()=>{settingsPanel.style.display='none';paused=false;});
-document.getElementById('quality').addEventListener('change',e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='high'?2:q==='medium'?1.5:1));sun.shadow.mapSize.setScalar(q==='high'?2048:q==='medium'?1024:512);sun.shadow.needsUpdate=true;renderer.shadowMap.enabled=q!=='low';});
+function applyQuality(q){
+ renderer.setPixelRatio(Math.min(devicePixelRatio,q==='high'?2:q==='medium'?1.5:1));
+ sun.shadow.mapSize.setScalar(q==='high'?2048:q==='medium'?1024:512);
+ sun.shadow.needsUpdate=true;renderer.shadowMap.enabled=q!=='low';
+}
+const qualitySelect=document.getElementById('quality');
+let savedQuality='high';try{savedQuality=localStorage.getItem('lostWorldQuality')||(matchMedia('(pointer:coarse)').matches?'medium':'high');}catch(e){}
+qualitySelect.value=savedQuality;applyQuality(savedQuality);
+qualitySelect.addEventListener('change',e=>{applyQuality(e.target.value);try{localStorage.setItem('lostWorldQuality',e.target.value);}catch(err){}});
 document.getElementById('fullscreen').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();});
 
-const portal=new THREE.Group();portal.position.set(0,0,-59);scene.add(portal);
+const portal=new THREE.Group();portal.position.set(0,terrainHeight(0,-59),-59);scene.add(portal);
 const portalRing=new THREE.Mesh(new THREE.TorusGeometry(3.1,.22,12,64),new THREE.MeshStandardMaterial({color:0x9beedc,emissive:0x31c8a5,emissiveIntensity:2.4,metalness:.4,roughness:.25}));portalRing.position.y=3.6;portal.add(portalRing);
 const portalCore=new THREE.Mesh(new THREE.CircleGeometry(2.85,48),new THREE.MeshBasicMaterial({color:0x1e827c,transparent:true,opacity:.34,side:THREE.DoubleSide}));portalCore.position.set(0,3.6,0);portal.add(portalCore);
 for(const side of [-1,1]){const pillar=new THREE.Mesh(new THREE.CylinderGeometry(.34,.48,7,8),mat(0x788c79));pillar.position.set(side*3.15,3.5,0);pillar.castShadow=true;portal.add(pillar);}
@@ -323,7 +346,7 @@ let health=100,food=100,coins=0,berries=0,potions=1,paused=false,attackCooldown=
 let guardianDefeated=false,dayTime=0;
 const enemies=[],chests=[],berryPatches=[];
 function makeEnemy(x,z,boss=false){
- const g=new THREE.Group();g.position.set(x,0,z);
+ const g=new THREE.Group();g.position.set(x,terrainHeight(x,z),z);
  const hide=mat(boss?0x4a292d:0x35433b),hide2=mat(boss?0x9a5144:0x667b5b),eye=new THREE.MeshStandardMaterial({color:0xff5b45,emissive:0xd92317,emissiveIntensity:2});
  addMesh(g,new THREE.CapsuleGeometry(boss?.8:.42,boss?1.05:.55,4,7),hide,0,boss?1.35:1.05,0,1,1.1,1);
  addMesh(g,new THREE.SphereGeometry(boss?.55:.32,8,7),hide2,0,boss?2.35:1.85,0);
@@ -334,7 +357,7 @@ function makeEnemy(x,z,boss=false){
 for(let i=0;i<7;i++){const a=i/7*Math.PI*2;makeEnemy(Math.cos(a)*(28+rand()*12),Math.sin(a)*(28+rand()*12)-10);}
 const guardian=makeEnemy(0, -52, true);
 function makeChest(x,z){
- const g=new THREE.Group();g.position.set(x,0,z);
+ const g=new THREE.Group();g.position.set(x,terrainHeight(x,z),z);
  addMesh(g,new THREE.BoxGeometry(1.15,.65,.78),mat(0x68452e),0,.48,0);
  addMesh(g,new THREE.BoxGeometry(1.2,.16,.84),mat(0xb28a4b),0,.88,0);
  addMesh(g,new THREE.BoxGeometry(.16,.34,.08),mat(0xe0c16e),0,.62,.43);
@@ -342,7 +365,7 @@ function makeChest(x,z){
 }
 makeChest(-18,-28);makeChest(24,18);makeChest(-37,34);
 function makeBerry(x,z){
- const g=new THREE.Group();g.position.set(x,0,z);
+ const g=new THREE.Group();g.position.set(x,terrainHeight(x,z),z);
  addMesh(g,new THREE.SphereGeometry(.35,6,5),mat(0x477b43),0,.28,0);
  for(let i=0;i<3;i++)addMesh(g,new THREE.SphereGeometry(.09,6,5),mat(0xc94b61),(i-1)*.16,.48,.08);
  scene.add(g);berryPatches.push({group:g,used:false});
@@ -372,7 +395,7 @@ function saveGame(){
 function loadGame(){
  try{const d=JSON.parse(localStorage.getItem('lostWorldSaveV2')||'null');if(!d)return;
  crystalsFound=Math.min(8,Math.max(0,d.crystalsFound||0));health=Math.min(100,Math.max(1,d.health||100));food=Math.min(100,Math.max(0,d.food??100));coins=d.coins||0;berries=d.berries||0;potions=d.potions??1;guardianDefeated=!!d.guardianDefeated;
- if(d.player){player.position.set(THREE.MathUtils.clamp(d.player.x,-bounds,bounds),0,THREE.MathUtils.clamp(d.player.z,-bounds,bounds));}
+ if(d.player){const sx=THREE.MathUtils.clamp(d.player.x,-bounds,bounds),sz=THREE.MathUtils.clamp(d.player.z,-bounds,bounds);player.position.set(sx,terrainHeight(sx,sz),sz);}
  for(let i=0;i<crystalsFound;i++)if(crystals[i])crystals[i].mesh.visible=false;
  if(guardianDefeated){guardian.alive=false;guardian.group.visible=false;}
  countEl.textContent=crystalsFound+' / 8';updateHud();
@@ -409,7 +432,7 @@ function updateWorld(dt,t){
 }
 function updateEnemies(dt){
  for(const e of enemies){if(!e.alive)continue;const delta=new THREE.Vector3(player.position.x-e.group.position.x,0,player.position.z-e.group.position.z);const dist=delta.length();
- if(dist<25&&dist>1.7){delta.normalize();e.group.position.addScaledVector(delta,e.speed*dt);e.group.rotation.y=Math.atan2(delta.x,delta.z);}
+ if(dist<25&&dist>1.7){delta.normalize();e.group.position.addScaledVector(delta,e.speed*dt);e.group.rotation.y=Math.atan2(delta.x,delta.z);}e.group.position.y=terrainHeight(e.group.position.x,e.group.position.z);
  e.attack=Math.max(0,e.attack-dt);
  if(dist<2.1&&e.attack===0){e.attack=1.25;health=Math.max(0,health-(e.boss?17:8));notify(e.boss?'The guardian strikes!':'You were hit!');if(health<=0){health=65;food=Math.max(10,food-20);player.position.set(0,0,8);notify('You were rescued at the valley entrance.');}}
  }
@@ -417,6 +440,12 @@ function updateEnemies(dt){
 function pauseGame(){paused=!paused;pausePanel.style.display=paused?'grid':'none';if(paused){document.exitPointerLock?.();saveGame();}else if(started)renderer.domElement.requestPointerLock?.();}
 document.getElementById('resume').addEventListener('click',pauseGame);
 document.getElementById('save').addEventListener('click',saveGame);
+document.getElementById('new-game').addEventListener('click',()=>{
+ if(confirm('Start a completely new adventure? Your saved Lost World progress will be erased.')){
+  try{localStorage.removeItem('lostWorldSaveV2');}catch(e){}
+  location.reload();
+ }
+});
 document.addEventListener('keydown',e=>{
  if(e.code==='Escape'&&started){e.preventDefault();pauseGame();}
  if(e.code==='KeyF'&&!e.repeat)attack();
@@ -427,21 +456,35 @@ loadGame();
 
 function update(dt,t){
  if(paused)return;
+ const pad=Array.from(navigator.getGamepads?.()||[]).find(Boolean);
+ if(pad){
+  gamepadX=Math.abs(pad.axes[0]||0)>.16?pad.axes[0]:0;
+  gamepadY=Math.abs(pad.axes[1]||0)>.16?pad.axes[1]:0;
+  gamepadLookX=Math.abs(pad.axes[2]||0)>.16?pad.axes[2]:0;
+  gamepadLookY=Math.abs(pad.axes[3]||0)>.16?pad.axes[3]:0;
+  gamepadJump=!!pad.buttons[0]?.pressed;gamepadSprint=!!pad.buttons[10]?.pressed;
+  const attackDown=!!pad.buttons[2]?.pressed,interactDown=!!pad.buttons[3]?.pressed;
+  if(attackDown&&!gamepadAttackWasDown)attack();
+  if(interactDown&&!gamepadInteractWasDown)interact();
+  gamepadAttackWasDown=attackDown;gamepadInteractWasDown=interactDown;
+ }else{gamepadX=gamepadY=gamepadLookX=gamepadLookY=0;gamepadJump=gamepadSprint=false;gamepadAttackWasDown=gamepadInteractWasDown=false;}
+ yaw-=gamepadLookX*dt*2.2;pitch=THREE.MathUtils.clamp(pitch+gamepadLookY*dt*1.7,-.55,.45);
  updateWorld(dt,t);updateEnemies(dt);
  food=Math.max(0,food-dt*.22);if(food===0)health=Math.max(0,health-dt*1.2);autosaveTimer+=dt;if(autosaveTimer>30){saveGame();autosaveTimer=0;}
- if(health<=0){health=65;food=35;player.position.set(0,0,8);notify('You wake at the valley entrance.');}
+ if(health<=0){health=65;food=35;player.position.set(0,terrainHeight(0,8),8);notify('You wake at the valley entrance.');}
  attackCooldown=Math.max(0,attackCooldown-dt);interactCooldown=Math.max(0,interactCooldown-dt);
- const inputX=THREE.MathUtils.clamp((keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+touchAxis.x,-1,1);
- const inputZ=THREE.MathUtils.clamp((keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+touchAxis.y,-1,1);
+ const inputX=THREE.MathUtils.clamp((keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+touchAxis.x+gamepadX,-1,1);
+ const inputZ=THREE.MathUtils.clamp((keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+touchAxis.y+gamepadY,-1,1);
  forward.set(-Math.sin(yaw),0,-Math.cos(yaw));right.set(Math.cos(yaw),0,-Math.sin(yaw));
  move.set(0,0,0).addScaledVector(right,inputX).addScaledVector(forward,-inputZ);
- if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const sprint=((keys.ShiftLeft||keys.ShiftRight)||touchAxis.y<-.82)&&stamina>0;const speed=sprint?10:5.5;player.position.addScaledVector(move,speed*dt);if(sprint)stamina=Math.max(0,stamina-28*dt);else stamina=Math.min(100,stamina+19*dt);}else stamina=Math.min(100,stamina+22*dt);
+ if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const sprint=((keys.ShiftLeft||keys.ShiftRight)||touchAxis.y<-.82||gamepadSprint)&&stamina>0;const speed=sprint?10:5.5;player.position.addScaledVector(move,speed*dt);if(sprint)stamina=Math.max(0,stamina-28*dt);else stamina=Math.min(100,stamina+19*dt);}else stamina=Math.min(100,stamina+22*dt);
  staminaFill.style.width=stamina+'%';staminaLabel.textContent=Math.round(stamina)+'%';
  player.position.x=THREE.MathUtils.clamp(player.position.x,-bounds,bounds);
  player.position.z=THREE.MathUtils.clamp(player.position.z,-bounds,bounds);
- if(keys.Space&&onGround){velocityY=8.5;onGround=false;}
+ if((keys.Space||gamepadJump)&&onGround){velocityY=8.5;onGround=false;}
  velocityY-=22*dt;player.position.y+=velocityY*dt;
- if(player.position.y<0){player.position.y=0;velocityY=0;onGround=true;}
+ const floorY=terrainHeight(player.position.x,player.position.z);
+ if(player.position.y<floorY){player.position.y=floorY;velocityY=0;onGround=true;}
  swordSwing=Math.max(0,swordSwing-dt*4.5);sword.rotation.x=-swordSwing*1.7;sword.rotation.z=-.2+swordSwing*1.35;
  const moving=move.lengthSq()>.001;
  body.position.y=moving&&onGround?Math.abs(Math.sin(t*11))*.055:0;
@@ -470,6 +513,11 @@ function animate(){
 }
 animate();
 loading.remove();
+let installPrompt=null;const installButton=document.getElementById('install-app');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;installButton.hidden=false;installButton.style.display='block';});
+installButton.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;installButton.hidden=true;installButton.style.display='none';});
+window.addEventListener('appinstalled',()=>{installButton.hidden=true;installButton.style.display='none';notify('Lost World installed successfully.');});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
