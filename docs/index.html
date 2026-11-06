@@ -38,6 +38,25 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
 #stamina-track{height:6px;border-radius:9px;background:#ffffff24;overflow:hidden}
 #stamina-fill{height:100%;width:100%;background:linear-gradient(90deg,#8bd69b,#e1d17a);border-radius:9px;transition:width .12s}
 #toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900;letter-spacing:.14em;font-size:clamp(16px,4vw,26px);color:#e8f7d8;text-shadow:0 3px 18px #000;opacity:0;pointer-events:none;text-align:center;transition:opacity .3s}
+
+#vitals{position:absolute;left:20px;top:190px;width:190px;background:#081b20b8;border:1px solid #d4edcf33;border-radius:12px;padding:10px 12px;backdrop-filter:blur(10px)}
+.vital{display:grid;grid-template-columns:48px 1fr 30px;gap:7px;align-items:center;margin:5px 0;font-size:10px;color:#dbe8dc}
+.vital-track{height:6px;background:#ffffff24;border-radius:8px;overflow:hidden}.vital-fill{height:100%;width:100%;border-radius:8px;transition:width .15s}
+#health-fill{background:linear-gradient(90deg,#e45e59,#f5a18a)}#food-fill{background:linear-gradient(90deg,#d69b4c,#f3d17c)}
+#questlog{position:absolute;right:20px;top:235px;width:190px;background:#081b20b8;border:1px solid #d4edcf33;border-radius:12px;padding:11px 13px;backdrop-filter:blur(10px);font-size:11px;color:#dbe8dc}
+#questlog strong{display:block;color:#e7d18b;letter-spacing:.12em;font-size:10px;margin-bottom:7px}
+#questlog .done{color:#9de0aa;text-decoration:line-through}
+#inventory{position:absolute;right:20px;bottom:20px;background:#081b20c9;border:1px solid #d4edcf33;border-radius:10px;padding:9px 12px;font-size:11px;color:#e7eadb}
+#pause{position:fixed;inset:0;z-index:8;display:none;place-items:center;background:#020b0ddd;padding:20px}
+#pause .panel{pointer-events:auto}
+#pause button{margin:7px}
+#hud button{pointer-events:auto}
+#save-indicator{position:absolute;top:64px;right:20px;color:#b9d9bd;font-size:10px;opacity:0;transition:opacity .2s}
+#bossbar{position:absolute;left:50%;top:22px;transform:translateX(-50%);width:min(360px,70vw);display:none;background:#07151ddd;border:1px solid #d88b73;padding:8px 12px;border-radius:10px}
+#bossbar strong{display:block;font-size:10px;letter-spacing:.15em;color:#f0b29a;margin-bottom:5px}
+#boss-track{height:7px;background:#ffffff25;border-radius:8px;overflow:hidden}#boss-fill{height:100%;width:100%;background:#d65d52}
+@media(max-width:600px){#vitals{top:185px;left:12px;width:150px}#questlog{right:12px;top:225px;width:150px}#inventory{right:12px;bottom:12px;font-size:10px}#save-indicator{right:12px}}
+
 @media(max-width:600px){#map-wrap{top:auto;bottom:100px;right:12px;width:112px;height:112px}#status{left:12px;bottom:76px;width:150px}#message{bottom:145px}}
 @media(max-width:600px){.top{top:12px;left:12px;right:12px}.pill{font-size:10px;padding:8px 10px}#objective{top:64px;left:12px}#help{left:12px;bottom:12px;gap:5px}.key{font-size:10px;padding:7px 8px}}
 </style>
@@ -59,10 +78,19 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
 <div id="hud">
   <div class="top"><div class="brand">LOST WORLD<span>THE FORGOTTEN VALLEY</span></div><div class="pill">EXPLORER · DAY 01</div></div>
   <div id="objective"><strong>FIRST EXPEDITION</strong><div>Restore the ancient gate</div><div style="margin-top:7px">Crystals: <span id="count">0 / 8</span></div></div>
-  <div id="map-wrap"><canvas id="map" width="128" height="128"></canvas></div><div id="status"><div id="status-head"><span>STAMINA</span><span id="stamina-label">100%</span></div><div id="stamina-track"><div id="stamina-fill"></div></div></div><div id="crosshair"></div><div id="toast"></div>
+  <div id="map-wrap"><canvas id="map" width="128" height="128"></canvas></div><div id="status"><div id="status-head"><span>STAMINA</span><span id="stamina-label">100%</span></div><div id="stamina-track"><div id="stamina-fill"></div></div></div>
+  <div id="vitals">
+    <div class="vital"><span>HEALTH</span><div class="vital-track"><div id="health-fill" class="vital-fill"></div></div><b id="health-label">100</b></div>
+    <div class="vital"><span>FOOD</span><div class="vital-track"><div id="food-fill" class="vital-fill"></div></div><b id="food-label">100</b></div>
+  </div>
+  <div id="questlog"><strong>JOURNAL</strong><div id="quest-crystals">◇ Recover the 8 crystals</div><div id="quest-gate">◇ Find the ancient gate</div><div id="quest-guardian">◇ Defeat the valley guardian</div></div>
+  <div id="inventory">🎒 <span id="coin-count">0</span> coins &nbsp; · &nbsp; 🍓 <span id="berry-count">0</span> berries &nbsp; · &nbsp; 🧪 <span id="potion-count">1</span> potions</div>
+  <div id="save-indicator">GAME SAVED</div>
+  <div id="bossbar"><strong>THE VALLEY GUARDIAN</strong><div id="boss-track"><div id="boss-fill"></div></div></div><div id="crosshair"></div><div id="toast"></div>
   <div id="message">Crystal collected!</div>
   <div id="help"><div class="key"><b>W A S D</b> Move</div><div class="key"><b>Mouse</b> Look</div><div class="key"><b>SHIFT</b> Sprint</div><div class="key"><b>SPACE</b> Jump</div><div class="key"><b>ESC</b> Release mouse</div></div>
 </div>
+<div id="pause"><div class="panel"><div class="eyebrow">THE VALLEY IS WAITING</div><h1>PAUSED</h1><p>Take a breath, explorer. Your progress can be saved at any time.</p><button id="resume">RESUME</button><button id="save">SAVE GAME</button><p style="font-size:11px">WASD move · Mouse look · Shift sprint · Space jump · F attack · E interact · 1 use potion · Esc pause</p></div></div>
 <script type="module">
 import * as THREE from 'three';
 
@@ -76,6 +104,12 @@ const staminaLabel=document.getElementById('stamina-label');
 const mapCanvas=document.getElementById('map');
 const mapCtx=mapCanvas.getContext('2d');
 const toastEl=document.getElementById('toast');
+const healthFill=document.getElementById('health-fill'),healthLabel=document.getElementById('health-label');
+const foodFill=document.getElementById('food-fill'),foodLabel=document.getElementById('food-label');
+const coinCount=document.getElementById('coin-count'),berryCount=document.getElementById('berry-count'),potionCount=document.getElementById('potion-count');
+const pausePanel=document.getElementById('pause'),saveIndicator=document.getElementById('save-indicator');
+const bossBar=document.getElementById('bossbar'),bossFill=document.getElementById('boss-fill');
+
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8fc8d6);
@@ -219,7 +253,7 @@ addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 renderer.domElement.addEventListener('click',()=>{if(started&&!document.pointerLockElement)renderer.domElement.requestPointerLock?.();});
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0024;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.0018,-.55,.45);}});
-startButton.addEventListener('click',()=>{started=true;overlay.style.display='none';renderer.domElement.requestPointerLock?.();});
+startButton.addEventListener('click',()=>{started=true;overlay.style.display='none';renderer.domElement.requestPointerLock?.();updateHud();});
 function notify(text){messageEl.textContent=text;messageEl.style.opacity='1';clearTimeout(notify.timer);notify.timer=setTimeout(()=>messageEl.style.opacity='0',1500);}
 function drawMap(){
  const ctx=mapCtx;ctx.clearRect(0,0,128,128);ctx.fillStyle="rgba(10,31,28,.92)";ctx.fillRect(0,0,128,128);
@@ -231,7 +265,117 @@ function drawMap(){
  ctx.save();ctx.translate(px,pz);ctx.rotate(player.rotation.y);ctx.fillStyle="#fff3c4";ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(4,5);ctx.lineTo(0,3);ctx.lineTo(-4,5);ctx.closePath();ctx.fill();ctx.restore();
 }
 let mapTimer=0;
+let health=100,food=100,coins=0,berries=0,potions=1,paused=false,attackCooldown=0,interactCooldown=0,gameOver=false;
+let guardianDefeated=false,dayTime=0;
+const enemies=[],chests=[],berryPatches=[];
+function makeEnemy(x,z,boss=false){
+ const g=new THREE.Group();g.position.set(x,0,z);
+ const hide=mat(boss?0x4a292d:0x35433b),hide2=mat(boss?0x9a5144:0x667b5b),eye=new THREE.MeshStandardMaterial({color:0xff5b45,emissive:0xd92317,emissiveIntensity:2});
+ addMesh(g,new THREE.CapsuleGeometry(boss?.8:.42,boss?1.05:.55,4,7),hide,0,boss?1.35:1.05,0,1,1.1,1);
+ addMesh(g,new THREE.SphereGeometry(boss?.55:.32,8,7),hide2,0,boss?2.35:1.85,0);
+ for(const side of [-1,1])addMesh(g,new THREE.SphereGeometry(boss?.095:.06,6,6),eye,side*(boss?.2:.12),boss?2.38:1.9,.27);
+ for(const side of [-1,1])addMesh(g,new THREE.CylinderGeometry(.13,.19,boss?1.1:.72,6),hide,side*(boss?.58:.35),.55,0);
+ scene.add(g);const e={group:g,hp:boss?180:55,maxHp:boss?180:55,boss,attack:0,alive:true,speed:boss?2.1:2.8};enemies.push(e);return e;
+}
+for(let i=0;i<7;i++){const a=i/7*Math.PI*2;makeEnemy(Math.cos(a)*(28+rand()*12),Math.sin(a)*(28+rand()*12)-10);}
+const guardian=makeEnemy(0, -52, true);
+function makeChest(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);
+ addMesh(g,new THREE.BoxGeometry(1.15,.65,.78),mat(0x68452e),0,.48,0);
+ addMesh(g,new THREE.BoxGeometry(1.2,.16,.84),mat(0xb28a4b),0,.88,0);
+ addMesh(g,new THREE.BoxGeometry(.16,.34,.08),mat(0xe0c16e),0,.62,.43);
+ scene.add(g);chests.push({group:g,opened:false});
+}
+makeChest(-18,-28);makeChest(24,18);makeChest(-37,34);
+function makeBerry(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);
+ addMesh(g,new THREE.SphereGeometry(.35,6,5),mat(0x477b43),0,.28,0);
+ for(let i=0;i<3;i++)addMesh(g,new THREE.SphereGeometry(.09,6,5),mat(0xc94b61),(i-1)*.16,.48,.08);
+ scene.add(g);berryPatches.push({group:g,used:false});
+}
+for(let i=0;i<14;i++)makeBerry((rand()-.5)*110,(rand()-.5)*110);
+const fireflyCount=100,fireflyPositions=new Float32Array(fireflyCount*3),fireflyGeo=new THREE.BufferGeometry();
+for(let i=0;i<fireflyCount;i++){fireflyPositions[i*3]=(rand()-.5)*110;fireflyPositions[i*3+1]=1+rand()*7;fireflyPositions[i*3+2]=(rand()-.5)*110;}
+fireflyGeo.setAttribute('position',new THREE.BufferAttribute(fireflyPositions,3));
+const fireflies=new THREE.Points(fireflyGeo,new THREE.PointsMaterial({color:0xc9f5a5,size:.16,transparent:true,opacity:.75}));scene.add(fireflies);
+function updateHud(){
+ healthFill.style.width=health+'%';healthLabel.textContent=Math.ceil(health);
+ foodFill.style.width=food+'%';foodLabel.textContent=Math.ceil(food);
+ coinCount.textContent=coins;berryCount.textContent=berries;potionCount.textContent=potions;
+ document.getElementById('quest-crystals').className=crystalsFound===8?'done':'';
+ document.getElementById('quest-crystals').textContent=(crystalsFound===8?'✓':'◇')+' Recover the 8 crystals ('+crystalsFound+'/8)';
+ document.getElementById('quest-gate').className=crystalsFound===8?'done':'';
+ document.getElementById('quest-gate').textContent=(crystalsFound===8?'✓':'◇')+' Find the ancient gate';
+ document.getElementById('quest-guardian').className=guardianDefeated?'done':'';
+ document.getElementById('quest-guardian').textContent=(guardianDefeated?'✓':'◇')+' Defeat the valley guardian';
+ bossBar.style.display=guardian.alive&&player.position.distanceTo(guardian.group.position)<34?'block':'none';
+ bossFill.style.width=(guardian.hp/guardian.maxHp*100)+'%';
+}
+function saveGame(){
+ const data={crystalsFound,health,food,coins,berries,potions,guardianDefeated,player:{x:player.position.x,z:player.position.z}};
+ try{localStorage.setItem('lostWorldSaveV2',JSON.stringify(data));saveIndicator.style.opacity='1';setTimeout(()=>saveIndicator.style.opacity='0',1300);notify('Adventure saved safely.');}catch(e){notify('Save unavailable in this browser.');}
+}
+function loadGame(){
+ try{const d=JSON.parse(localStorage.getItem('lostWorldSaveV2')||'null');if(!d)return;
+ crystalsFound=Math.min(8,Math.max(0,d.crystalsFound||0));health=Math.min(100,Math.max(1,d.health||100));food=Math.min(100,Math.max(0,d.food??100));coins=d.coins||0;berries=d.berries||0;potions=d.potions??1;guardianDefeated=!!d.guardianDefeated;
+ if(d.player){player.position.set(THREE.MathUtils.clamp(d.player.x,-bounds,bounds),0,THREE.MathUtils.clamp(d.player.z,-bounds,bounds));}
+ for(let i=0;i<crystalsFound;i++)if(crystals[i])crystals[i].mesh.visible=false;
+ if(guardianDefeated){guardian.alive=false;guardian.group.visible=false;}
+ countEl.textContent=crystalsFound+' / 8';updateHud();
+ }catch(e){}
+}
+function attack(){
+ if(attackCooldown>0||paused)return;attackCooldown=.48;
+ const target=enemies.filter(e=>e.alive&&player.position.distanceTo(e.group.position)<(e.boss?4.5:3.4)).sort((a,b)=>player.position.distanceTo(a.group.position)-player.position.distanceTo(b.group.position))[0];
+ if(!target){notify('Your blade cuts through empty air.');return;}
+ target.hp-=target.boss?22:34;target.group.rotation.y+=.35;
+ if(target.hp<=0){target.alive=false;target.group.visible=false;coins+=target.boss?100:15;if(target.boss){guardianDefeated=true;notify('THE GUARDIAN HAS FALLEN!');toastEl.textContent='VALLEY GUARDIAN DEFEATED';toastEl.style.opacity='1';setTimeout(()=>toastEl.style.opacity='0',2500);}else notify('Forest creature defeated · +15 coins');}
+ else notify(target.boss?'Guardian hit!':'Creature hit!');
+ updateHud();
+}
+function interact(){
+ if(interactCooldown>0)return;interactCooldown=.3;
+ const chest=chests.find(c=>!c.opened&&player.position.distanceTo(c.group.position)<3.2);
+ if(chest){chest.opened=true;chest.group.rotation.x=-.35;coins+=35;potions++;notify('Treasure chest opened · +35 coins · +1 potion');updateHud();return;}
+ const berry=berryPatches.find(b=>!b.used&&player.position.distanceTo(b.group.position)<2.4);
+ if(berry){berry.used=true;berry.group.visible=false;berries+=2;notify('Wild berries collected · +2');updateHud();return;}
+ notify('Nothing nearby to interact with.');
+}
+function usePotion(){if(potions>0&&health<100){potions--;health=Math.min(100,health+45);notify('Potion used · health restored');updateHud();}else if(berries>0&&food<100){berries--;food=Math.min(100,food+35);notify('Berries eaten · food restored');updateHud();}else notify('No food or potion available.');}
+function updateWorld(dt,t){
+ dayTime=(dayTime+dt*.012)%1;const sunAngle=dayTime*Math.PI*2;
+ sun.position.set(Math.cos(sunAngle)*55,Math.sin(sunAngle)*60,25);
+ const daylight=THREE.MathUtils.clamp(Math.sin(sunAngle)*.5+.5,.12,1);
+ sun.intensity=.35+daylight*2.5;scene.background.setHSL(.55,.35,.12+daylight*.42);
+ scene.fog.color.copy(scene.background);scene.fog.near=45;scene.fog.far=daylight>0.25?155:95;
+ fireflies.material.opacity=.25+(1-daylight)*.7;
+ for(let i=0;i<fireflyCount;i++)fireflyPositions[i*3+1]=1.5+Math.sin(t*1.4+i)*.65+((i%7)*.3);
+ fireflyGeo.attributes.position.needsUpdate=true;
+}
+function updateEnemies(dt){
+ for(const e of enemies){if(!e.alive)continue;const delta=new THREE.Vector3(player.position.x-e.group.position.x,0,player.position.z-e.group.position.z);const dist=delta.length();
+ if(dist<25&&dist>1.7){delta.normalize();e.group.position.addScaledVector(delta,e.speed*dt);e.group.rotation.y=Math.atan2(delta.x,delta.z);}
+ e.attack=Math.max(0,e.attack-dt);
+ if(dist<2.1&&e.attack===0){e.attack=1.25;health=Math.max(0,health-(e.boss?17:8));notify(e.boss?'The guardian strikes!':'You were hit!');if(health<=0){health=65;food=Math.max(10,food-20);player.position.set(0,0,8);notify('You were rescued at the valley entrance.');}}
+ }
+}
+function pauseGame(){paused=!paused;pausePanel.style.display=paused?'grid':'none';if(paused){document.exitPointerLock?.();saveGame();}else if(started)renderer.domElement.requestPointerLock?.();}
+document.getElementById('resume').addEventListener('click',pauseGame);
+document.getElementById('save').addEventListener('click',saveGame);
+document.addEventListener('keydown',e=>{
+ if(e.code==='Escape'&&started){e.preventDefault();pauseGame();}
+ if(e.code==='KeyF'&&!e.repeat)attack();
+ if(e.code==='KeyE'&&!e.repeat)interact();
+ if(e.code==='Digit1'&&!e.repeat)usePotion();
+});
+loadGame();
+
 function update(dt,t){
+ if(paused)return;
+ updateWorld(dt,t);updateEnemies(dt);
+ food=Math.max(0,food-dt*.22);if(food===0)health=Math.max(0,health-dt*1.2);
+ if(health<=0){health=65;food=35;player.position.set(0,0,8);notify('You wake at the valley entrance.');}
+ attackCooldown=Math.max(0,attackCooldown-dt);interactCooldown=Math.max(0,interactCooldown-dt);
  const inputX=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
  const inputZ=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
  forward.set(-Math.sin(yaw),0,-Math.cos(yaw));right.set(Math.cos(yaw),0,-Math.sin(yaw));
@@ -257,13 +401,14 @@ function update(dt,t){
   if(c.visible&&player.position.distanceTo(c.position)<1.8){c.visible=false;crystalsFound++;countEl.textContent=crystalsFound+' / 8';notify('Ancient crystal found!');}
  }
  if(crystalsFound===8&&countEl.dataset.done!=='1'){countEl.dataset.done='1';notify('All crystals found! The ancient gate is awake.');toastEl.textContent='THE GATE IS AWAKE';toastEl.style.opacity='1';setTimeout(()=>toastEl.style.opacity='0',2200);portalLight.intensity=5;}
+ updateHud();
  portalRing.rotation.z=Math.sin(t*.55)*.08;portalCore.rotation.z=-t*.12;portalLight.intensity=crystalsFound===8?4.5+Math.sin(t*3)*1.1:0;
  if(crystalsFound===8&&!portalWon&&player.position.distanceTo(portal.position)<5){portalWon=true;toastEl.textContent='VALLEY RESTORED · YOU WIN';toastEl.style.opacity='1';notify('You restored the Forgotten Valley!');}
 }
 function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
- if(started){update(dt,t);mapTimer+=dt;if(mapTimer>.12){drawMap();mapTimer=0;}}
+ if(started&&!paused){update(dt,t);mapTimer+=dt;if(mapTimer>.12){drawMap();mapTimer=0;}}
  else {camera.position.set(Math.sin(t*.08)*.3,5,9);camera.lookAt(0,1,0);}
  renderer.render(scene,camera);
 }
