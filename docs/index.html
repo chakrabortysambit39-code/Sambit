@@ -409,7 +409,7 @@ function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
  if(started&&!paused){update(dt,t);mapTimer+=dt;if(mapTimer>.12){drawMap();mapTimer=0;}}
- else {camera.position.set(Math.sin(t*.08)*.3,5,9);camera.lookAt(0,1,0);}
+ else if(!started){camera.position.set(Math.sin(t*.08)*.3,5,9);camera.lookAt(0,1,0);}
  renderer.render(scene,camera);
 }
 animate();
