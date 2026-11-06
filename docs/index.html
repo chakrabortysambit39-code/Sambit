@@ -59,6 +59,20 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
 
 @media(max-width:600px){#map-wrap{top:auto;bottom:100px;right:12px;width:112px;height:112px}#status{left:12px;bottom:76px;width:150px}#message{bottom:145px}}
 @media(max-width:600px){.top{top:12px;left:12px;right:12px}.pill{font-size:10px;padding:8px 10px}#objective{top:64px;left:12px}#help{left:12px;bottom:12px;gap:5px}.key{font-size:10px;padding:7px 8px}}
+
+/* Complete-release mobile controls */
+#touch-controls{display:none;position:fixed;inset:0;z-index:4;pointer-events:none}
+#stick-zone{position:absolute;left:22px;bottom:95px;width:132px;height:132px;border:1px solid #e6f2d866;border-radius:50%;background:#071a1d55;pointer-events:auto;touch-action:none}
+#stick-knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:#d8bd72cc;border:2px solid #fff8;box-shadow:0 4px 18px #0006}
+#touch-actions{position:absolute;right:18px;bottom:92px;display:grid;grid-template-columns:repeat(2,58px);gap:9px;pointer-events:auto}
+.touch-btn{width:58px;height:58px;border-radius:50%;padding:0;margin:0;background:#102c2bd9;border:1px solid #e4f4e599;color:#fff;font-size:11px;touch-action:manipulation;box-shadow:0 4px 16px #0006}
+.touch-btn:active{background:#c5a65c;color:#14221a}
+#touch-look{position:absolute;right:0;top:20%;width:48%;height:55%;pointer-events:auto;touch-action:none}
+@media(pointer:coarse){#touch-controls{display:block}#help{display:none}#map-wrap{bottom:245px}#status{bottom:12px}#inventory{bottom:12px;left:50%;right:auto;transform:translateX(-50%);white-space:nowrap}#message{bottom:235px}}
+#settings-btn{position:absolute;right:20px;top:18px;pointer-events:auto;background:#081b20b8;color:#f4f1e8;border:1px solid #d4edcf55;padding:9px 12px;margin:0;font-size:11px}
+#settings-panel{position:fixed;inset:0;z-index:9;display:none;place-items:center;background:#020b0ddd;padding:20px}
+#settings-panel .panel{pointer-events:auto}
+
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}
@@ -88,9 +102,17 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
   <div id="save-indicator">GAME SAVED</div>
   <div id="bossbar"><strong>THE VALLEY GUARDIAN</strong><div id="boss-track"><div id="boss-fill"></div></div></div><div id="crosshair"></div><div id="toast"></div>
   <div id="message">Crystal collected!</div>
+  <button id="settings-btn">SETTINGS</button>
+  <div id="touch-controls"><div id="touch-look"></div><div id="stick-zone"><div id="stick-knob"></div></div>
+    <div id="touch-actions"><button class="touch-btn" id="touch-jump">JUMP</button><button class="touch-btn" id="touch-attack">ATTACK</button><button class="touch-btn" id="touch-use">USE</button><button class="touch-btn" id="touch-interact">INTERACT</button></div>
+  </div>
   <div id="help"><div class="key"><b>W A S D</b> Move</div><div class="key"><b>Mouse</b> Look</div><div class="key"><b>SHIFT</b> Sprint</div><div class="key"><b>SPACE</b> Jump</div><div class="key"><b>ESC</b> Release mouse</div></div>
 </div>
 <div id="pause"><div class="panel"><div class="eyebrow">THE VALLEY IS WAITING</div><h1>PAUSED</h1><p>Take a breath, explorer. Your progress can be saved at any time.</p><button id="resume">RESUME</button><button id="save">SAVE GAME</button><p style="font-size:11px">WASD move · Mouse look · Shift sprint · Space jump · F attack · E interact · 1 use potion · Esc pause</p></div></div>
+
+<div id="settings-panel"><div class="panel"><div class="eyebrow">GAME OPTIONS</div><h1>SETTINGS</h1><p>Choose how the valley runs on your device.</p>
+<label style="display:block;margin:14px;color:#dce9d7">Graphics quality &nbsp;<select id="quality" style="padding:9px;border-radius:8px;background:#102b27;color:white"><option value="high">High</option><option value="medium">Medium</option><option value="low">Performance</option></select></label>
+<button id="fullscreen">FULLSCREEN</button><button id="close-settings">CLOSE</button></div></div>
 <script type="module">
 import * as THREE from 'three';
 
@@ -249,6 +271,32 @@ const cameraTarget=new THREE.Vector3();
 const desiredCamera=new THREE.Vector3();
 const forward=new THREE.Vector3(),right=new THREE.Vector3(),move=new THREE.Vector3();
 const bounds=92;
+
+/* Touch controls, camera drag, quality and fullscreen options */
+const touchAxis={x:0,y:0};let stickPointer=null,lookPointer=null,lastLookX=0,lastLookY=0;
+const stickZone=document.getElementById('stick-zone'),stickKnob=document.getElementById('stick-knob');
+function resetStick(){touchAxis.x=0;touchAxis.y=0;stickKnob.style.transform='translate(0px,0px)';}
+stickZone.addEventListener('pointerdown',e=>{stickPointer=e.pointerId;stickZone.setPointerCapture(e.pointerId);moveStick(e);});
+stickZone.addEventListener('pointermove',e=>{if(e.pointerId===stickPointer)moveStick(e);});
+function moveStick(e){const r=stickZone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const len=Math.hypot(dx,dy),max=43;if(len>max){dx=dx/len*max;dy=dy/len*max;}touchAxis.x=dx/max;touchAxis.y=dy/max;stickKnob.style.transform='translate('+dx+'px,'+dy+'px)';}
+stickZone.addEventListener('pointerup',e=>{if(e.pointerId===stickPointer){stickPointer=null;resetStick();}});
+stickZone.addEventListener('pointercancel',()=>{stickPointer=null;resetStick();});
+const lookArea=document.getElementById('touch-look');
+lookArea.addEventListener('pointerdown',e=>{lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;lookArea.setPointerCapture(e.pointerId);});
+lookArea.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.004,-.55,.45);});
+lookArea.addEventListener('pointerup',()=>lookPointer=null);lookArea.addEventListener('pointercancel',()=>lookPointer=null);
+document.getElementById('touch-jump').addEventListener('pointerdown',()=>{keys.Space=true;});
+document.getElementById('touch-jump').addEventListener('pointerup',()=>{keys.Space=false;});
+document.getElementById('touch-jump').addEventListener('pointercancel',()=>{keys.Space=false;});
+document.getElementById('touch-attack').addEventListener('click',attack);
+document.getElementById('touch-interact').addEventListener('click',interact);
+document.getElementById('touch-use').addEventListener('click',usePotion);
+const settingsPanel=document.getElementById('settings-panel');
+document.getElementById('settings-btn').addEventListener('click',()=>{settingsPanel.style.display='grid';paused=true;document.exitPointerLock?.();});
+document.getElementById('close-settings').addEventListener('click',()=>{settingsPanel.style.display='none';paused=false;});
+document.getElementById('quality').addEventListener('change',e=>{const q=e.target.value;renderer.setPixelRatio(Math.min(devicePixelRatio,q==='high'?2:q==='medium'?1.5:1));sun.shadow.mapSize.setScalar(q==='high'?2048:q==='medium'?1024:512);sun.shadow.needsUpdate=true;renderer.shadowMap.enabled=q!=='low';});
+document.getElementById('fullscreen').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();});
+
 const portal=new THREE.Group();portal.position.set(0,0,-59);scene.add(portal);
 const portalRing=new THREE.Mesh(new THREE.TorusGeometry(3.1,.22,12,64),new THREE.MeshStandardMaterial({color:0x9beedc,emissive:0x31c8a5,emissiveIntensity:2.4,metalness:.4,roughness:.25}));portalRing.position.y=3.6;portal.add(portalRing);
 const portalCore=new THREE.Mesh(new THREE.CircleGeometry(2.85,48),new THREE.MeshBasicMaterial({color:0x1e827c,transparent:true,opacity:.34,side:THREE.DoubleSide}));portalCore.position.set(0,3.6,0);portal.add(portalCore);
@@ -383,11 +431,11 @@ function update(dt,t){
  food=Math.max(0,food-dt*.22);if(food===0)health=Math.max(0,health-dt*1.2);autosaveTimer+=dt;if(autosaveTimer>30){saveGame();autosaveTimer=0;}
  if(health<=0){health=65;food=35;player.position.set(0,0,8);notify('You wake at the valley entrance.');}
  attackCooldown=Math.max(0,attackCooldown-dt);interactCooldown=Math.max(0,interactCooldown-dt);
- const inputX=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
- const inputZ=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
+ const inputX=THREE.MathUtils.clamp((keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+touchAxis.x,-1,1);
+ const inputZ=THREE.MathUtils.clamp((keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+touchAxis.y,-1,1);
  forward.set(-Math.sin(yaw),0,-Math.cos(yaw));right.set(Math.cos(yaw),0,-Math.sin(yaw));
  move.set(0,0,0).addScaledVector(right,inputX).addScaledVector(forward,-inputZ);
- if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const sprint=(keys.ShiftLeft||keys.ShiftRight)&&stamina>0;const speed=sprint?10:5.5;player.position.addScaledVector(move,speed*dt);if(sprint)stamina=Math.max(0,stamina-28*dt);else stamina=Math.min(100,stamina+19*dt);}else stamina=Math.min(100,stamina+22*dt);
+ if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const sprint=((keys.ShiftLeft||keys.ShiftRight)||touchAxis.y<-.82)&&stamina>0;const speed=sprint?10:5.5;player.position.addScaledVector(move,speed*dt);if(sprint)stamina=Math.max(0,stamina-28*dt);else stamina=Math.min(100,stamina+19*dt);}else stamina=Math.min(100,stamina+22*dt);
  staminaFill.style.width=stamina+'%';staminaLabel.textContent=Math.round(stamina)+'%';
  player.position.x=THREE.MathUtils.clamp(player.position.x,-bounds,bounds);
  player.position.z=THREE.MathUtils.clamp(player.position.z,-bounds,bounds);
