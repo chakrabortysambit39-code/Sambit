@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lost World — Explorer Prototype</title>
+<meta name="theme-color" content="#07131a"><title>LOST WORLD — The Forgotten Valley</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
 *{box-sizing:border-box}
@@ -22,7 +22,7 @@ canvas{display:block}
 .key{background:#0b2025c9;border:1px solid #e4f4e533;border-radius:8px;padding:8px 10px;font-size:11px;color:#dbe8dc}
 .key b{color:#fff}
 #crosshair{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#fff9;box-shadow:0 0 8px #fff8;transform:translate(-50%,-50%)}
-#message{position:absolute;left:50%;bottom:82px;transform:translateX(-50%);background:#07171bd9;border:1px solid #d4edcf33;border-radius:999px;padding:10px 15px;font-size:12px;opacity:0;transition:opacity .25s;white-space:nowrap}
+#message{position:absolute;left:50%;bottom:112px;transform:translateX(-50%);background:#07171bd9;border:1px solid #d4edcf33;border-radius:999px;padding:10px 15px;font-size:12px;opacity:0;transition:opacity .25s;white-space:nowrap}
 #overlay{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#06151a99,#06151ae8);z-index:5;padding:20px}
 .panel{width:min(520px,100%);padding:30px;border:1px solid #d7e8cf3d;border-radius:22px;background:linear-gradient(145deg,#17332ddd,#09191dee);box-shadow:0 25px 100px #0008;text-align:center}
 .eyebrow{font-size:10px;letter-spacing:.28em;color:#b8d7a8;font-weight:800}
@@ -31,6 +31,14 @@ h1{font-size:clamp(36px,8vw,58px);line-height:.95;margin:13px 0 12px;letter-spac
 button{border:0;border-radius:999px;background:#d8bd72;color:#17231c;font-weight:900;padding:14px 24px;font-size:13px;letter-spacing:.08em;cursor:pointer;margin-top:12px}
 button:hover{background:#f0d991;transform:translateY(-1px)}
 #loading{position:fixed;inset:0;display:grid;place-items:center;background:#09191d;color:#dce9d7;z-index:10;font-size:13px}
+#map-wrap{position:absolute;right:20px;top:78px;width:142px;height:142px;border-radius:18px;border:1px solid #d4edcf55;background:#06191dcc;padding:7px;backdrop-filter:blur(10px);box-shadow:0 10px 35px #0004}
+#map{width:100%;height:100%;border-radius:12px}
+#status{position:absolute;left:20px;bottom:76px;width:190px;background:#081b20b8;border:1px solid #d4edcf33;border-radius:12px;padding:10px 12px;backdrop-filter:blur(10px)}
+#status-head{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.12em;color:#dbe8dc;margin-bottom:7px}
+#stamina-track{height:6px;border-radius:9px;background:#ffffff24;overflow:hidden}
+#stamina-fill{height:100%;width:100%;background:linear-gradient(90deg,#8bd69b,#e1d17a);border-radius:9px;transition:width .12s}
+#toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900;letter-spacing:.14em;font-size:clamp(16px,4vw,26px);color:#e8f7d8;text-shadow:0 3px 18px #000;opacity:0;pointer-events:none;text-align:center;transition:opacity .3s}
+@media(max-width:600px){#map-wrap{top:auto;bottom:100px;right:12px;width:112px;height:112px}#status{left:12px;bottom:76px;width:150px}#message{bottom:145px}}
 @media(max-width:600px){.top{top:12px;left:12px;right:12px}.pill{font-size:10px;padding:8px 10px}#objective{top:64px;left:12px}#help{left:12px;bottom:12px;gap:5px}.key{font-size:10px;padding:7px 8px}}
 </style>
 <script type="importmap">
@@ -41,17 +49,17 @@ button:hover{background:#f0d991;transform:translateY(-1px)}
 <div id="loading">Preparing the Lost World…</div>
 <div id="overlay">
   <div class="panel">
-    <div class="eyebrow">A THIRD-PERSON EXPLORATION GAME</div>
+    <div class="eyebrow">AN OPEN-WORLD ADVENTURE</div>
     <h1>LOST<br>WORLD</h1>
-    <p>You wake in a forgotten valley. Explore the forest, find the glowing ancient crystals and discover what this place is hiding.</p>
+    <p>You wake in a forgotten valley. Explore a vast forgotten valley, uncover eight lost crystals and awaken the ancient gate. Every trail leads to a secret.</p>
     <p><b>WASD</b> move · <b>Mouse</b> look · <b>Shift</b> sprint · <b>Space</b> jump</p>
     <button id="start">ENTER THE VALLEY</button>
   </div>
 </div>
 <div id="hud">
   <div class="top"><div class="brand">LOST WORLD<span>THE FORGOTTEN VALLEY</span></div><div class="pill">EXPLORER · DAY 01</div></div>
-  <div id="objective"><strong>FIRST EXPEDITION</strong><div>Find the ancient crystals</div><div style="margin-top:7px">Crystals: <span id="count">0 / 8</span></div></div>
-  <div id="crosshair"></div>
+  <div id="objective"><strong>FIRST EXPEDITION</strong><div>Restore the ancient gate</div><div style="margin-top:7px">Crystals: <span id="count">0 / 8</span></div></div>
+  <div id="map-wrap"><canvas id="map" width="128" height="128"></canvas></div><div id="status"><div id="status-head"><span>STAMINA</span><span id="stamina-label">100%</span></div><div id="stamina-track"><div id="stamina-fill"></div></div></div><div id="crosshair"></div><div id="toast"></div>
   <div id="message">Crystal collected!</div>
   <div id="help"><div class="key"><b>W A S D</b> Move</div><div class="key"><b>Mouse</b> Look</div><div class="key"><b>SHIFT</b> Sprint</div><div class="key"><b>SPACE</b> Jump</div><div class="key"><b>ESC</b> Release mouse</div></div>
 </div>
@@ -63,6 +71,11 @@ const overlay=document.getElementById('overlay');
 const startButton=document.getElementById('start');
 const countEl=document.getElementById('count');
 const messageEl=document.getElementById('message');
+const staminaFill=document.getElementById('stamina-fill');
+const staminaLabel=document.getElementById('stamina-label');
+const mapCanvas=document.getElementById('map');
+const mapCtx=mapCanvas.getContext('2d');
+const toastEl=document.getElementById('toast');
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8fc8d6);
@@ -190,12 +203,17 @@ for(let i=0;i<120;i++){
  flower.position.set(x,.35,z);scene.add(flower);
 }
 
-const keys={};let yaw=0,pitch=-.12,velocityY=0,onGround=true,started=false,crystalsFound=0;
+const keys={};let yaw=0,pitch=-.12,velocityY=0,onGround=true,started=false,crystalsFound=0,stamina=100,portalWon=false;
 const clock=new THREE.Clock();
 const cameraTarget=new THREE.Vector3();
 const desiredCamera=new THREE.Vector3();
 const forward=new THREE.Vector3(),right=new THREE.Vector3(),move=new THREE.Vector3();
 const bounds=92;
+const portal=new THREE.Group();portal.position.set(0,0,-59);scene.add(portal);
+const portalRing=new THREE.Mesh(new THREE.TorusGeometry(3.1,.22,12,64),new THREE.MeshStandardMaterial({color:0x9beedc,emissive:0x31c8a5,emissiveIntensity:2.4,metalness:.4,roughness:.25}));portalRing.position.y=3.6;portal.add(portalRing);
+const portalCore=new THREE.Mesh(new THREE.CircleGeometry(2.85,48),new THREE.MeshBasicMaterial({color:0x1e827c,transparent:true,opacity:.34,side:THREE.DoubleSide}));portalCore.position.set(0,3.6,0);portal.add(portalCore);
+for(const side of [-1,1]){const pillar=new THREE.Mesh(new THREE.CylinderGeometry(.34,.48,7,8),mat(0x788c79));pillar.position.set(side*3.15,3.5,0);pillar.castShadow=true;portal.add(pillar);}
+const portalLight=new THREE.PointLight(0x65f4d1,0,18);portalLight.position.set(0,3.6,0);portal.add(portalLight);
 addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();});
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
@@ -203,12 +221,23 @@ renderer.domElement.addEventListener('click',()=>{if(started&&!document.pointerL
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0024;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.0018,-.55,.45);}});
 startButton.addEventListener('click',()=>{started=true;overlay.style.display='none';renderer.domElement.requestPointerLock?.();});
 function notify(text){messageEl.textContent=text;messageEl.style.opacity='1';clearTimeout(notify.timer);notify.timer=setTimeout(()=>messageEl.style.opacity='0',1500);}
+function drawMap(){
+ const ctx=mapCtx;ctx.clearRect(0,0,128,128);ctx.fillStyle="rgba(10,31,28,.92)";ctx.fillRect(0,0,128,128);
+ ctx.strokeStyle="rgba(194,224,185,.13)";ctx.lineWidth=1;
+ for(let i=16;i<128;i+=24){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,128);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(128,i);ctx.stroke();}
+ const scale=.62,px=64+player.position.x*scale,pz=64+(player.position.z+10)*scale;
+ ctx.fillStyle="#f4d47e";ctx.beginPath();ctx.arc(64,64+(-59+10)*scale,3,0,Math.PI*2);ctx.fill();
+ for(const item of crystals){if(item.mesh.visible){const x=64+item.mesh.position.x*scale,z=64+(item.mesh.position.z+10)*scale;if(x>2&&x<126&&z>2&&z<126){ctx.fillStyle="#75efd4";ctx.beginPath();ctx.arc(x,z,2.5,0,Math.PI*2);ctx.fill();}}}
+ ctx.save();ctx.translate(px,pz);ctx.rotate(player.rotation.y);ctx.fillStyle="#fff3c4";ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(4,5);ctx.lineTo(0,3);ctx.lineTo(-4,5);ctx.closePath();ctx.fill();ctx.restore();
+}
+let mapTimer=0;
 function update(dt,t){
  const inputX=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
  const inputZ=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
  forward.set(-Math.sin(yaw),0,-Math.cos(yaw));right.set(Math.cos(yaw),0,-Math.sin(yaw));
  move.set(0,0,0).addScaledVector(right,inputX).addScaledVector(forward,-inputZ);
- if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const speed=(keys.ShiftLeft||keys.ShiftRight)?10:5.5;player.position.addScaledVector(move,speed*dt);}
+ if(move.lengthSq()>0){move.normalize();player.rotation.y=Math.atan2(move.x,move.z);const sprint=(keys.ShiftLeft||keys.ShiftRight)&&stamina>0;const speed=sprint?10:5.5;player.position.addScaledVector(move,speed*dt);if(sprint)stamina=Math.max(0,stamina-28*dt);else stamina=Math.min(100,stamina+19*dt);}else stamina=Math.min(100,stamina+22*dt);
+ staminaFill.style.width=stamina+'%';staminaLabel.textContent=Math.round(stamina)+'%';
  player.position.x=THREE.MathUtils.clamp(player.position.x,-bounds,bounds);
  player.position.z=THREE.MathUtils.clamp(player.position.z,-bounds,bounds);
  if(keys.Space&&onGround){velocityY=8.5;onGround=false;}
@@ -227,12 +256,14 @@ function update(dt,t){
   const c=item.mesh;c.rotation.y+=dt*.8;c.position.y=item.baseY+Math.sin(t*2+item.phase)*.16;
   if(c.visible&&player.position.distanceTo(c.position)<1.8){c.visible=false;crystalsFound++;countEl.textContent=crystalsFound+' / 8';notify('Ancient crystal found!');}
  }
- if(crystalsFound===8&&countEl.dataset.done!=='1'){countEl.dataset.done='1';notify('Expedition complete! You found every crystal.');}
+ if(crystalsFound===8&&countEl.dataset.done!=='1'){countEl.dataset.done='1';notify('All crystals found! The ancient gate is awake.');toastEl.textContent='THE GATE IS AWAKE';toastEl.style.opacity='1';setTimeout(()=>toastEl.style.opacity='0',2200);portalLight.intensity=5;}
+ portalRing.rotation.z=Math.sin(t*.55)*.08;portalCore.rotation.z=-t*.12;portalLight.intensity=crystalsFound===8?4.5+Math.sin(t*3)*1.1:0;
+ if(crystalsFound===8&&!portalWon&&player.position.distanceTo(portal.position)<5){portalWon=true;toastEl.textContent='VALLEY RESTORED · YOU WIN';toastEl.style.opacity='1';notify('You restored the Forgotten Valley!');}
 }
 function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
- if(started)update(dt,t);
+ if(started){update(dt,t);mapTimer+=dt;if(mapTimer>.12){drawMap();mapTimer=0;}}
  else {camera.position.set(Math.sin(t*.08)*.3,5,9);camera.lookAt(0,1,0);}
  renderer.render(scene,camera);
 }
