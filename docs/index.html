@@ -265,7 +265,7 @@ function drawMap(){
  ctx.save();ctx.translate(px,pz);ctx.rotate(player.rotation.y);ctx.fillStyle="#fff3c4";ctx.beginPath();ctx.moveTo(0,-6);ctx.lineTo(4,5);ctx.lineTo(0,3);ctx.lineTo(-4,5);ctx.closePath();ctx.fill();ctx.restore();
 }
 let mapTimer=0;
-let health=100,food=100,coins=0,berries=0,potions=1,paused=false,attackCooldown=0,interactCooldown=0,gameOver=false;
+let health=100,food=100,coins=0,berries=0,potions=1,paused=false,attackCooldown=0,interactCooldown=0,autosaveTimer=0;
 let guardianDefeated=false,dayTime=0;
 const enemies=[],chests=[],berryPatches=[];
 function makeEnemy(x,z,boss=false){
@@ -373,7 +373,7 @@ loadGame();
 function update(dt,t){
  if(paused)return;
  updateWorld(dt,t);updateEnemies(dt);
- food=Math.max(0,food-dt*.22);if(food===0)health=Math.max(0,health-dt*1.2);
+ food=Math.max(0,food-dt*.22);if(food===0)health=Math.max(0,health-dt*1.2);autosaveTimer+=dt;if(autosaveTimer>30){saveGame();autosaveTimer=0;}
  if(health<=0){health=65;food=35;player.position.set(0,0,8);notify('You wake at the valley entrance.');}
  attackCooldown=Math.max(0,attackCooldown-dt);interactCooldown=Math.max(0,interactCooldown-dt);
  const inputX=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
@@ -403,7 +403,7 @@ function update(dt,t){
  if(crystalsFound===8&&countEl.dataset.done!=='1'){countEl.dataset.done='1';notify('All crystals found! The ancient gate is awake.');toastEl.textContent='THE GATE IS AWAKE';toastEl.style.opacity='1';setTimeout(()=>toastEl.style.opacity='0',2200);portalLight.intensity=5;}
  updateHud();
  portalRing.rotation.z=Math.sin(t*.55)*.08;portalCore.rotation.z=-t*.12;portalLight.intensity=crystalsFound===8?4.5+Math.sin(t*3)*1.1:0;
- if(crystalsFound===8&&!portalWon&&player.position.distanceTo(portal.position)<5){portalWon=true;toastEl.textContent='VALLEY RESTORED · YOU WIN';toastEl.style.opacity='1';notify('You restored the Forgotten Valley!');}
+ if(crystalsFound===8&&guardianDefeated&&!portalWon&&player.position.distanceTo(portal.position)<5){portalWon=true;toastEl.textContent='VALLEY RESTORED · YOU WIN';toastEl.style.opacity='1';notify('You restored the Forgotten Valley!');}
 }
 function animate(){
  requestAnimationFrame(animate);
